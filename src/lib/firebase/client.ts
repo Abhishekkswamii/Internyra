@@ -1,3 +1,4 @@
+import { clearPrivateCaches } from "@/lib/pwa/pwa-state";
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import {
   getAuth,
@@ -198,4 +199,5 @@ export async function signOutUser(): Promise<void> {
   lastLogoutAt = Date.now();
   const a = getFirebaseAuth();
   if (a) await firebaseSignOut(a);
+  await clearPrivateCaches();
 }

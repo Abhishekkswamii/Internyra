@@ -28,8 +28,10 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: "/brand/favicon.svg",
-    apple: "/brand/logo-icon.svg",
+    apple: [{ url: "/brand/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  appleWebApp: { capable: true, title: "Internyra", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
   openGraph: {
     title: "Internyra — Know what you're applying to.",
     description: "Investigate internship opportunities with evidence, not guesswork.",
@@ -43,6 +45,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

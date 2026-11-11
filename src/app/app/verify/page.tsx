@@ -1,5 +1,6 @@
 "use client";
 
+import { useOnline } from "@/lib/pwa/pwa-state";
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Link2, MessageSquareText, RotateCw } from "lucide-react";
@@ -23,6 +24,7 @@ export default function VerifyPage() {
   const [recruiterEmail, setRecruiterEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const online = useOnline();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +103,9 @@ export default function VerifyPage() {
 
         {error && <p role="alert" className="rounded-lg border border-[var(--status-risk-border)] bg-[var(--status-risk-bg)] p-3 text-xs text-[var(--status-risk-text)]">{error}</p>}
 
-        <button type="submit" disabled={busy} className="inline-flex items-center gap-2 rounded-lg bg-[var(--ink-primary)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-primary)] disabled:opacity-50">
+        {!online && <p role="status" className="text-xs text-[var(--status-risk-text)]">You&apos;re offline. Reconnect to run an inspection — nothing is analysed offline.</p>}
+
+        <button type="submit" disabled={busy || !online} className="inline-flex items-center gap-2 rounded-lg bg-[var(--ink-primary)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-primary)] disabled:opacity-50">
           {busy && <RotateCw className="h-4 w-4 animate-spin" aria-hidden="true" />}
           <span>{busy ? "Saving…" : "Run inspection"}</span>
         </button>

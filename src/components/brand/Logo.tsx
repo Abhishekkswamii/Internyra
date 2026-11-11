@@ -89,7 +89,7 @@ export function Logo({
 
   if (asLink) {
     return (
-      <Link href={href} className="group inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg p-1">
+      <Link href={href} aria-label={variant === "icon" ? "Internyra home" : undefined} className="group inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg p-1">
         {Content}
       </Link>
     );

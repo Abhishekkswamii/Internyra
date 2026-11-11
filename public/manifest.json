@@ -1,12 +1,12 @@
 {
-  "name": "Internyra \u2014 Internship Intelligence & Verification",
+  "name": "Internyra",
   "short_name": "Internyra",
   "description": "Investigate internship opportunities with evidence, not guesswork.",
   "start_url": "/app",
   "display": "standalone",
   "background_color": "#f8f7f2",
   "theme_color": "#f8f7f2",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "/brand/icon-192.png",
@@ -34,6 +34,7 @@
     }
   ],
   "id": "/app",
+  "categories": ["education", "productivity"],
   "scope": "/",
   "lang": "en"
 }

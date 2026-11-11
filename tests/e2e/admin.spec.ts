@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createUserWithToken, logInViaUI, uniqueEmail } from "./helpers";
+import { createInspectionApi, createUserWithToken, logInViaUI, uniqueEmail } from "./helpers";
 
 async function signInViaGate(page: import("@playwright/test").Page, email: string, password: string) {
   await logInViaUI(page, { email, password });
@@ -18,7 +18,10 @@ test.describe("admin dashboard", () => {
     await expect(page.getByTestId("admin-overview")).toHaveCount(0);
   });
 
-  test("the provisioned admin sees real, honest data with pagination controls", async ({ page }) => {
+  test("the provisioned admin sees real, honest data with pagination controls", async ({ page, request }) => {
+    // Seed one real student record through the product API so the Students table is not order-dependent.
+    const seeded = await createUserWithToken(uniqueEmail("seed"));
+    await createInspectionApi(request, seeded.token);
     await signInViaGate(page, "admin@e2e.test", "e2e-admin-pass-1");
     await expect(page.getByRole("link", { name: "Admin" }).first()).toBeVisible({ timeout: 20_000 });
     await page.goto("/app/admin");

@@ -44,14 +44,14 @@ export function Examines() {
               <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">The link</h3>
               <p className="mt-1.5 text-white/65">Its structure, character by character.</p>
               <p className="mt-8 font-mono leading-tight tracking-tight" aria-label="Example link: jobs dot northwind dot example slash internship, with one Cyrillic letter">
-                <span className="block text-sm text-white/45 sm:text-base">https://</span>
+                <span className="block text-sm text-white/70 sm:text-base">https://</span>
                 <span className="block text-[1.7rem] sm:text-4xl">
                   jobs.n<mark className="rounded-md bg-[var(--citrus)] px-1 text-[var(--ink-primary)]">о</mark>rthwind
                 </span>
                 <span className="block text-base text-white/45 sm:text-xl">.example/internship</span>
               </p>
               <p className="mt-5 text-sm text-white/70">The highlighted letter is Cyrillic, mixed into a Latin name.</p>
-              <p className="mt-4 text-xs text-white/40">Illustration of a pattern we look for, not a real submission or result.</p>
+              <p className="mt-4 text-xs text-white/70">Illustration of a pattern we look for, not a real submission or result.</p>
             </div>
           </Reveal>
 

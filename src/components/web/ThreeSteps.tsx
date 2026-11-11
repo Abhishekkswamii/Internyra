@@ -70,8 +70,8 @@ export function ThreeSteps() {
                   <span className="absolute inset-x-0 top-0 origin-top bg-[var(--brand-primary)]" style={{ height: "100%", transform: `scaleY(${progress})` }} />
                 </span>
                 {STEPS.map((s, i) => (
-                  <li key={s.n} className={`flex gap-5 transition-opacity duration-500 ${i === active ? "opacity-100" : "opacity-35"}`} aria-current={i === active ? "step" : undefined}>
-                    <span className="font-mono text-sm pt-1.5 text-[var(--brand-primary)]">{s.n}</span>
+                  <li key={s.n} className={`flex gap-5 transition-opacity duration-500 ${i === active ? "opacity-100" : "opacity-85"}`} aria-current={i === active ? "step" : undefined}>
+                    <span className="font-mono text-sm pt-1.5 text-[#1e38be]">{s.n}</span>
                     <span>
                       <span className="block text-2xl font-semibold tracking-tight text-[var(--ink-primary)]">{s.title}</span>
                       <span className="mt-1 block text-[var(--ink-secondary)]">{s.body}</span>

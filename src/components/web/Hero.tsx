@@ -1,5 +1,6 @@
 "use client";
 
+import { useOnline } from "@/lib/pwa/pwa-state";
 import React, { useState } from "react";
 import { ArrowRight, RotateCw } from "lucide-react";
 import { validateUrl } from "@/lib/engine/url";
@@ -17,6 +18,7 @@ interface HeroProps {
 }
 
 export function Hero({ onSubmit, isRunning, initialDraft }: HeroProps) {
+  const online = useOnline();
   const [activeTab, setActiveTab] = useState<"link" | "message">(initialDraft?.kind === "message" ? "message" : "link");
   const [inputValue, setInputValue] = useState((initialDraft?.kind === "message" ? initialDraft.text : initialDraft?.url) ?? "");
   const [errorMessage, setErrorMessage] = useState("");
@@ -99,7 +101,8 @@ export function Hero({ onSubmit, isRunning, initialDraft }: HeroProps) {
               />
               <button
                 type="submit"
-                disabled={isRunning}
+                disabled={isRunning || !online}
+                title={online ? undefined : "You're offline"}
                 className="btn-primary h-12 shrink-0 px-5 text-sm"
                 aria-label={isRunning ? "Running check…" : "Inspect"}
               >

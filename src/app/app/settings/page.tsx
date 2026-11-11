@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/firebase/auth-context";
+import { InstallCard } from "@/components/pwa/InstallCard";
 import { useApi } from "@/lib/inspections-client";
 
 export default function SettingsPage() {
@@ -34,6 +35,8 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold tracking-tight text-[var(--ink-primary)] sm:text-3xl">Settings</h1>
+
+      <InstallCard />
 
       <section className={card} aria-labelledby="acct">
         <h2 id="acct" className={h2}>Account</h2>
