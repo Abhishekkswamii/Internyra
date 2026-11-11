@@ -7,7 +7,7 @@ import { useApi, type Inspection } from "@/lib/inspections-client";
 import { formatDateTime } from "@/components/report/meta";
 
 type View = "overview" | "users" | "inspections" | "usage";
-interface Overview { counts: { users: number; inspections: number; byStatus: Record<string, number> }; usage: { cache: Record<string, number>; providers: Record<string, number>; fallbacks: number; rateLimited: number }; redisConfigured: boolean }
+interface Overview { counts: { users: number; inspections: number; byStatus: Record<string, number> }; usage: { cache: Record<string, number>; providers: Record<string, number>; fallbacks: number; rateLimited: number }; redisConfigured: boolean; redisReachable: boolean; ai: { enabled: boolean; geminiConfigured: boolean; openaiConfigured: boolean; webSearchEnabled: boolean; strategy: string } }
 interface UserRow { uid: string; email?: string; provider?: string; createdAt: string; lastSeenAt?: string }
 interface UsageRow { id: string; type: string; provider?: string; model?: string; cacheEvent?: string; fallback?: boolean; webSearchUsed?: boolean; success?: boolean; code?: string; timestamp: string }
 interface Page<T> { items: T[]; nextCursor: string | null }
@@ -94,7 +94,15 @@ export default function AdminPage() {
             ["Cache hits", overview.usage.cache.hit ?? 0], ["Cache misses", overview.usage.cache.miss ?? 0], ["Cache refreshes", overview.usage.cache.refresh ?? 0], ["Cache errors", overview.usage.cache.error ?? 0],
             ["Gemini analyses", overview.usage.providers.gemini ?? 0], ["OpenAI analyses", overview.usage.providers.openai ?? 0], ["Fallbacks used", overview.usage.fallbacks], ["Rate-limit events", overview.usage.rateLimited],
           ]} />
-          <p className="text-xs text-[var(--ink-muted)]">Redis cache: {overview.redisConfigured ? "configured" : "not configured"}. Counts come only from events recorded by the app; they start at zero.</p>
+          <Table head={["Service", "Status"]} empty="No data yet" rows={[
+            ["AI inspections", overview.ai.enabled ? "enabled" : "disabled (kill switch off, or no provider key)"],
+            ["Gemini (primary)", overview.ai.geminiConfigured ? "key configured" : "pending: not configured"],
+            ["OpenAI (fallback / temporary)", overview.ai.openaiConfigured ? "key configured" : "not configured"],
+            ["Provider mode", overview.ai.strategy.replace(/_/g, " ")],
+            ["Web search", overview.ai.webSearchEnabled ? "enabled" : "off"],
+            ["Redis cache", overview.redisConfigured ? (overview.redisReachable ? "configured, reachable" : "configured, NOT reachable (running without cache)") : "not configured"],
+          ]} />
+          <p className="text-xs text-[var(--ink-muted)]">Configured means a key is present, not that it has passed a live test (run npm run smoke:ai). Counts come only from events recorded by the app; they start at zero.</p>
         </div>
       )}
       {view === "users" && (<><Table head={["Email", "Type", "Created", "Last seen"]} empty="No data yet" rows={users.items.map((u) => [u.email ?? "(anonymous visitor)", u.provider ?? "-", formatDateTime(u.createdAt), u.lastSeenAt ? formatDateTime(u.lastSeenAt) : "-"])} />{more(users)}</>)}

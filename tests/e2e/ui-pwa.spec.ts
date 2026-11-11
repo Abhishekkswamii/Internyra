@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createUserWithToken, logInViaUI, PASSWORD, uniqueEmail } from "./helpers";
 
 const ROUTES = ["/", "/app", "/privacy", "/terms", "/app/reports/insp_missing-0000"];
 
@@ -44,7 +45,9 @@ test.describe("Layout & accessibility regression", () => {
 
   test("touch targets on phone-sized screens stay usable", async ({ page, isMobile }) => {
     test.skip(!isMobile, "mobile only");
-    await page.goto("/app");
+    const u = await createUserWithToken(uniqueEmail("touch"), PASSWORD);
+    await logInViaUI(page, { email: u.email });
+    await page.waitForURL("**/app", { timeout: 20_000 });
     const nav = page.locator("nav.fixed a");
     await expect(nav.last()).toBeVisible();
     const count = await nav.count();

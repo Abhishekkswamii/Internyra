@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { onIdTokenChanged, type User } from "firebase/auth";
 import { getClientConfig } from "@/lib/config/client";
-import { ensureAnonymousUser, getFirebaseAuth, signInWithEmail, signInWithGoogle, signOutUser, signUpWithEmail, type AuthResult } from "./client";
+import { ensureAnonymousUser, getFirebaseAuth, requestPasswordReset, signInWithEmail, signInWithGoogle, signOutUser, signUpWithEmail, type AuthResult } from "./client";
 
 interface AuthContextValue {
   user: User | null;
@@ -16,7 +16,8 @@ interface AuthContextValue {
   isAdmin: boolean;
   getIdToken: (forceRefresh?: boolean) => Promise<string | null>;
   ensureAnonymous: () => Promise<User | null>;
-  signUp: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string, displayName?: string) => Promise<AuthResult>;
+  resetPassword: (email: string) => Promise<{ ok: boolean; code?: string }>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signInGoogle: () => Promise<AuthResult>;
   logout: () => Promise<void>;
@@ -25,7 +26,7 @@ interface AuthContextValue {
 const noop = async () => ({ user: null }) as AuthResult;
 const AuthContext = createContext<AuthContextValue>({
   user: null, loading: true, configured: false, isAnonymous: false, isAdmin: false,
-  getIdToken: async () => null, ensureAnonymous: async () => null, signUp: noop, signIn: noop, signInGoogle: noop, logout: async () => {},
+  getIdToken: async () => null, ensureAnonymous: async () => null, signUp: noop, resetPassword: async () => ({ ok: false }), signIn: noop, signInGoogle: noop, logout: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -72,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       user, loading, configured, isAdmin, isAnonymous,
-      getIdToken, ensureAnonymous: ensureAnonymousUser, signUp: signUpWithEmail, signIn: signInWithEmail, signInGoogle: signInWithGoogle, logout: signOutUser,
+      getIdToken, ensureAnonymous: ensureAnonymousUser, signUp: signUpWithEmail, resetPassword: requestPasswordReset, signIn: signInWithEmail, signInGoogle: signInWithGoogle, logout: signOutUser,
     }),
     [user, loading, configured, isAdmin, isAnonymous, getIdToken]
   );

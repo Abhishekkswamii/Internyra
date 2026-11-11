@@ -17,7 +17,11 @@ No Vercel configuration exists or is used.
    ```
    Then uncomment the matching blocks in `apphosting.yaml` and grant the backend access when prompted.
 5. **Smoke-test before enabling AI** with your new keys: `npm run smoke:ai` and `npm run smoke:redis`. Only then set `AI_INSPECTIONS_ENABLED` to `"true"` in `apphosting.yaml`. If Gemini is not configured, OpenAI runs as the explicitly recorded temporary provider.
-6. **Admin account.** Sign up in the app as yourself (ordinary account), copy your UID from Firebase console → Authentication, set it as the `admin-uid` secret / `ADMIN_UID`, then run `ADMIN_UID=<uid> FIREBASE_PROJECT_ID=internyra-385d6 npm run admin:claim -- <uid>` (needs `gcloud auth application-default login` as the project owner). Enable multi-factor authentication on that account.
+6. **Admin account.** Sign up in the app as `abhishekswami0467@gmail.com` through `/signup` (or Continue with Google) and **verify the email** (the script refuses an unverified address, so nobody can pre-register it). Then run, with `gcloud auth application-default login` done as the project owner:
+   ```bash
+   ADMIN_EMAIL=abhishekswami0467@gmail.com FIREBASE_PROJECT_ID=internyra-385d6 npm run admin:claim
+   ```
+   It looks up the exact UID, preserves existing claims, sets `admin: true` and prints the UID. Put that UID in `apphosting.yaml` as `ADMIN_UID` (a UID is not a secret), redeploy, sign out and back in. The server honours admin only when the token has the claim **and** `uid === ADMIN_UID`. Enable multi-factor authentication for this account (Firebase console → Authentication → Sign-in method → Multi-factor authentication; this may require upgrading to Identity Platform, check its pricing first).
 7. **Budget alerts** (Google Cloud console → Billing → Budgets & alerts): create a budget with alerts at 50/90/100 %. Alerts are **notifications, not a spending cap**. Check *Cloud Run* and *Firestore* usage in the Firebase console during the trial (credit expires 10 Feb 2027).
 
 ## Backend

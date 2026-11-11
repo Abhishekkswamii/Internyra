@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronRight, FileSearch, Plus } from "lucide-react";
 import { useApi, type Inspection } from "@/lib/inspections-client";
 import { useAuth } from "@/lib/firebase/auth-context";
+import { resendVerification } from "@/lib/firebase/client";
 import { STATUS_LABEL } from "@/lib/research/types";
 import { formatDate } from "@/components/report/meta";
 
@@ -46,6 +47,8 @@ function DashboardContent() {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [more, setMore] = useState(false);
+  const [verifyMsg, setVerifyMsg] = useState<string | null>(null);
+  const needsVerification = Boolean(user && !user.emailVerified && user.providerData.some((p) => p.providerId === "password"));
 
   const fetchPage = useCallback(
     (after: string | null) => api<{ inspections: Inspection[]; nextCursor: string | null }>(`/api/inspections?limit=20${after ? `&cursor=${encodeURIComponent(after)}` : ""}`),
@@ -93,6 +96,13 @@ function DashboardContent() {
           <span>New inspection</span>
         </Link>
       </div>
+
+      {needsVerification && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900" data-testid="verify-banner">
+          <span>{verifyMsg ?? "Please verify your email address. We sent a link to your inbox when you signed up."}</span>
+          <button type="button" onClick={async () => setVerifyMsg((await resendVerification()) ? "Verification email sent. Check your inbox." : "Couldn't send the email right now. Try again later.")} className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100">Resend email</button>
+        </div>
+      )}
 
       {state === "error" && (
         <p role="alert" className="rounded-xl border border-[var(--status-risk-border)] bg-[var(--status-risk-bg)] p-4 text-sm text-[var(--status-risk-text)]">{error}</p>

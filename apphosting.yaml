@@ -60,6 +60,8 @@ env:
   # - variable: UPSTASH_REDIS_REST_TOKEN
   #   secret: upstash-redis-rest-token
   #   availability: [RUNTIME]
+
+  # The admin account's UID (not a secret). Set after `npm run admin:claim` prints it:
   # - variable: ADMIN_UID
-  #   secret: admin-uid
+  #   value: <uid printed by the script>
   #   availability: [RUNTIME]

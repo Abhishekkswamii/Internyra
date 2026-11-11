@@ -269,6 +269,15 @@ describe("admin access", () => {
     expect(store.audit.every((a) => a.adminUid === "admin-uid")).toBe(true);
   });
 
+  it("the overview reports provider and Redis status as booleans only (Gemini pending, nothing leaked)", async () => {
+    process.env.OPENAI_API_KEY = "TESTONLY-dummy-key-for-status";
+    const res = await admin.GET(jsonReq("/api/admin/data?view=overview", "GET", bearer("admin-uid", "admin")));
+    const body = (await res.json()) as { ai: Record<string, unknown>; redisConfigured: boolean };
+    expect(body.ai).toMatchObject({ geminiConfigured: false, openaiConfigured: true, enabled: false, strategy: "openai_temporary_gemini_not_configured" });
+    expect(body.redisConfigured).toBe(false);
+    expect(JSON.stringify(body)).not.toContain("TESTONLY-dummy-key-for-status");
+  });
+
   it("rejects unknown views", async () => {
     expect((await admin.GET(jsonReq("/api/admin/data?view=secrets", "GET", bearer("admin-uid", "admin")))).status).toBe(422);
   });

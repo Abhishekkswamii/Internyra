@@ -36,13 +36,14 @@ npm run dev                  # http://localhost:3000
 | `npm run build` | Production build |
 | `npm run smoke:ai` | Opt-in: one tiny request per configured AI provider (uses your *new* keys; prints no secrets) |
 | `npm run smoke:redis` | Opt-in: PING, TTL and lock checks against your Upstash database |
-| `npm run admin:claim -- <uid>` | One-time: grants the admin claim to the exact `ADMIN_UID` |
+| `ADMIN_EMAIL=… npm run admin:claim` | One-time: finds the (verified, non-anonymous) admin account, grants the claim and prints its UID for `ADMIN_UID` |
 
 Emulator-based commands need Java and download the emulators on first use.
 
 ## Routes
 
 - `/` landing page and the visitor checker
+- `/auth?mode=signup|login`, `/signup`, `/login` authentication (Google, email/password, password reset); `?next=` accepts internal `/app...` paths only
 - `/app` student dashboard (sign-in required) · `/app/verify` new inspection · `/app/reports/[id]` report or live status · `/app/settings` account, data notice, account deletion
 - `/app/admin` single-admin dashboard (server-verified)
 - `/privacy`, `/terms`

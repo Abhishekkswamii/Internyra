@@ -1,11 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { createUserWithToken, uniqueEmail } from "./helpers";
+import { createUserWithToken, logInViaUI, uniqueEmail } from "./helpers";
 
 async function signInViaGate(page: import("@playwright/test").Page, email: string, password: string) {
-  await page.goto("/app");
-  await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await logInViaUI(page, { email, password });
+  await page.waitForURL("**/app", { timeout: 20_000 });
 }
 
 test.describe("admin dashboard", () => {

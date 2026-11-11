@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { adminAuth, adminDb, createUserWithToken, findInspections, submitFromHero, uniqueEmail } from "./helpers";
+import { adminAuth, adminDb, createUserWithToken, findInspections, logInViaUI, signUpViaUI, submitFromHero, uniqueEmail } from "./helpers";
 
 const SECTIONS = ["Company", "Internship", "Recruiter", "Risk indicators", "Evidence"];
 const uniqueUrl = () => `https://careers.${Date.now()}${Math.floor(Math.random() * 1e6)}.example/intern`;
@@ -91,12 +91,8 @@ test.describe("student workspace", () => {
   test("a signed-in student sees an honest empty dashboard, can add and delete an inspection, and persists across logout/login", async ({ page }) => {
     const email = uniqueEmail("student");
     await page.goto("/app");
-    await expect(page.getByTestId("signin-gate")).toBeVisible();
-    await page.getByRole("button", { name: "New here? Create an account" }).click();
-    await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Password").fill("pass-1234");
-    await page.getByRole("button", { name: "Create account" }).click();
-
+    await page.waitForURL(/\/login\?next=/);
+    await signUpViaUI(page, { email });
     await expect(page.getByTestId("empty-state")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("No inspections yet")).toBeVisible();
     await expect(page.getByTestId("tile-inspections")).toHaveText("0");
@@ -117,9 +113,8 @@ test.describe("student workspace", () => {
     await page.getByRole("region", { name: "Account", exact: true }).getByRole("button", { name: "Sign out" }).click();
     await page.waitForURL("/");
     await page.goto("/app");
-    await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Password").fill("pass-1234");
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL(/\/login\?next=/);
+    await logInViaUI(page, { email, path: page.url() });
     await expect(page.getByTestId("inspection-row")).toHaveCount(1, { timeout: 20_000 });
 
     // Delete the inspection from its page.
@@ -132,11 +127,7 @@ test.describe("student workspace", () => {
 
   test("account deletion removes the sign-in account and every stored record", async ({ page }) => {
     const email = uniqueEmail("leaving");
-    await page.goto("/app");
-    await page.getByRole("button", { name: "New here? Create an account" }).click();
-    await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Password").fill("pass-1234");
-    await page.getByRole("button", { name: "Create account" }).click();
+    await signUpViaUI(page, { email });
     await expect(page.getByTestId("empty-state")).toBeVisible({ timeout: 20_000 });
     await page.goto("/app/verify");
     await page.getByLabel("Internship or job link").fill(uniqueUrl());

@@ -11,6 +11,9 @@ import {
   GoogleAuthProvider,
   EmailAuthProvider,
   signInAnonymously,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  updateProfile,
   signOut as firebaseSignOut,
   type Auth,
   type User,
@@ -56,7 +59,7 @@ export interface AuthResult {
 }
 
 const MESSAGES: Record<string, string> = {
-  EMAIL_EXISTS: "An account with this email already exists. Sign in instead.",
+  EMAIL_EXISTS: "We couldn't create an account with these details. If you already registered, log in or reset your password.",
   INVALID_CREDENTIALS: "The email or password is incorrect.",
   WEAK_PASSWORD: "Choose a stronger password (at least 6 characters).",
   RATE_LIMITED: "Too many attempts. Please wait a few minutes and try again.",
@@ -95,18 +98,50 @@ export async function ensureAnonymousUser(): Promise<User | null> {
 }
 
 /** New account. An anonymous identity is upgraded in place, so its pending work stays with the same UID. */
-export async function signUpWithEmail(email: string, password: string): Promise<AuthResult> {
+export async function signUpWithEmail(email: string, password: string, displayName?: string): Promise<AuthResult> {
   const a = getFirebaseAuth();
   if (!a) return unavailable();
   try {
+    let user: User;
     if (a.currentUser?.isAnonymous) {
-      const res = await linkWithCredential(a.currentUser, EmailAuthProvider.credential(email, password));
-      await res.user.getIdToken(true); // refresh so the token no longer says "anonymous"
-      return { user: res.user };
+      user = (await linkWithCredential(a.currentUser, EmailAuthProvider.credential(email, password))).user;
+    } else {
+      user = (await createUserWithEmailAndPassword(a, email, password)).user;
     }
-    return { user: (await createUserWithEmailAndPassword(a, email, password)).user };
+    if (displayName?.trim()) await updateProfile(user, { displayName: displayName.trim().slice(0, 80) }).catch(() => {});
+    // Best effort: a failed verification email must not block sign-up.
+    await sendEmailVerification(user).catch(() => {});
+    await user.getIdToken(true); // refresh so the token no longer says "anonymous"
+    return { user };
   } catch (err) {
     return fail(err);
+  }
+}
+
+/** Always resolves the same way, so the UI can never reveal whether an address is registered. */
+export async function requestPasswordReset(email: string): Promise<{ ok: boolean; code?: string }> {
+  const a = getFirebaseAuth();
+  if (!a) return { ok: false, code: "UNAVAILABLE" };
+  try {
+    await sendPasswordResetEmail(a, email);
+  } catch (err) {
+    const c = (err as { code?: string })?.code;
+    if (c === "auth/too-many-requests") return { ok: false, code: "RATE_LIMITED" };
+    if (c === "auth/network-request-failed") return { ok: false, code: "NETWORK" };
+    if (c === "auth/invalid-email") return { ok: false, code: "INVALID_EMAIL" };
+    // user-not-found and anything else: deliberately indistinguishable from success
+  }
+  return { ok: true };
+}
+
+export async function resendVerification(): Promise<boolean> {
+  const u = getFirebaseAuth()?.currentUser;
+  if (!u || u.emailVerified) return false;
+  try {
+    await sendEmailVerification(u);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -153,7 +188,14 @@ export async function signInWithGoogle(): Promise<AuthResult> {
   }
 }
 
+let lastLogoutAt = 0;
+/** True briefly after an explicit log-out, so the app returns home instead of bouncing to the login page. */
+export function recentlyLoggedOut(windowMs = 5000): boolean {
+  return Date.now() - lastLogoutAt < windowMs;
+}
+
 export async function signOutUser(): Promise<void> {
+  lastLogoutAt = Date.now();
   const a = getFirebaseAuth();
   if (a) await firebaseSignOut(a);
 }

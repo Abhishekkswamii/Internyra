@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AppShell } from "@/components/app/AppShell";
+import { ProtectedApp } from "@/components/app/ProtectedApp";
 
 export const metadata: Metadata = {
   title: "Internyra Core — Opportunity Verification Dashboard",
-  description: "Run checks on internship links and messages, review findings and evidence, and manage reports saved in this browser.",
+  description: "Run checks on internship links and messages, review findings and evidence, and manage your saved reports.",
 };
 
 export default function CoreLayout({
@@ -14,7 +14,7 @@ export default function CoreLayout({
 }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[var(--canvas)]" />}>
-      <AppShell>{children}</AppShell>
+      <ProtectedApp>{children}</ProtectedApp>
     </Suspense>
   );
 }

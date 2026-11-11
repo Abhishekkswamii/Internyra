@@ -16,7 +16,6 @@ import {
   LogIn,
 } from "lucide-react";
 import { useAuth } from "@/lib/firebase/auth-context";
-import { AuthForm } from "@/components/auth/AuthForm";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -104,7 +103,7 @@ function MobileNav() {
 
 export function AppShell({ children }: AppShellProps) {
   const router = useRouter();
-  const { user, loading, isAnonymous, isAdmin, logout } = useAuth();
+  const { user, isAnonymous, isAdmin, logout } = useAuth();
   const signedIn = Boolean(user && !isAnonymous);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -115,8 +114,8 @@ export function AppShell({ children }: AppShellProps) {
     }
   };
 
-  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : user ? "U" : "G";
-  const userDisplayName = user?.email ? user.email : "Not signed in";
+  const userInitial = (user?.displayName || user?.email || "U").charAt(0).toUpperCase();
+  const userDisplayName = user?.displayName || user?.email || "Signed in";
 
   return (
     <div className="min-h-screen bg-[var(--canvas)] text-[var(--ink-primary)] flex flex-col md:flex-row">
@@ -235,19 +234,7 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Dynamic Route Children Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-7xl w-full mx-auto">
-          {loading ? (
-            <div className="h-40 animate-pulse rounded-xl bg-[var(--surface-2)]" aria-busy="true" />
-          ) : signedIn ? (
-            children
-          ) : (
-            <div className="mx-auto max-w-sm space-y-4 py-10" data-testid="signin-gate">
-              <div className="space-y-1 text-center">
-                <h1 className="text-xl font-bold text-[var(--ink-primary)]">Sign in to Internyra</h1>
-                <p className="text-xs text-[var(--ink-secondary)]">Your inspections and reports are private to your account.</p>
-              </div>
-              <AuthForm initialMode="login" onSuccess={() => router.refresh()} submitLabel={{ signup: "Create account", login: "Sign in" }} />
-            </div>
-          )}
+          {children}
         </main>
 
         {/* Fixed Mobile Bottom Navigation Bar in Suspense */}

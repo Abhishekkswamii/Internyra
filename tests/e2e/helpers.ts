@@ -66,3 +66,28 @@ export async function waitForConsoleClean(page: Page) {
   page.on("pageerror", (e) => errors.push(String(e)));
   return errors;
 }
+
+export const PASSWORD = "Passw0rd-e2e";
+
+export async function signUpViaUI(page: Page, opts: { name?: string; email: string; password?: string; path?: string }) {
+  const pw = opts.password ?? PASSWORD;
+  await page.goto(opts.path ?? "/signup");
+  await page.getByLabel("Full name").fill(opts.name ?? "E2E Student");
+  await page.getByLabel("Email address").fill(opts.email);
+  await page.getByLabel("Password", { exact: true }).fill(pw);
+  await page.getByLabel("Confirm password").fill(pw);
+  await page.getByTestId("auth-submit").click();
+}
+
+export async function logInViaUI(page: Page, opts: { email: string; password?: string; path?: string }) {
+  await page.goto(opts.path ?? "/login");
+  await page.getByLabel("Email address").fill(opts.email);
+  await page.getByLabel("Password", { exact: true }).fill(opts.password ?? PASSWORD);
+  await page.getByTestId("auth-submit").click();
+}
+
+/** Mail the Auth emulator "sent": verification and password-reset codes it recorded. */
+export async function oobCodes(): Promise<{ email: string; requestType: string; oobCode: string }[]> {
+  const res = await fetch("http://127.0.0.1:9099/emulator/v1/projects/demo-internyra/oobCodes");
+  return ((await res.json()) as { oobCodes: { email: string; requestType: string; oobCode: string }[] }).oobCodes;
+}

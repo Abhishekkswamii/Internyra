@@ -1,4 +1,7 @@
-import { getRedisClient } from "@/lib/cache/redis";
+import { getRedisClient, pingRedis } from "@/lib/cache/redis";
+import { getServerConfig } from "@/lib/config/env";
+import { strategyFor } from "@/lib/research/coordinator";
+import { configuredProviders } from "@/lib/research/providers";
 import { requireAdminAuth } from "@/lib/firebase/admin";
 import { checkRateLimit } from "@/lib/cache/redis";
 import { errorResponse, isSameOrigin, jsonResponse, newRequestId } from "@/lib/server/http";
@@ -30,7 +33,17 @@ export async function GET(req: Request): Promise<Response> {
     await store.recordAudit({ adminUid: admin.uid, action: `admin.read.${view}` }, new Date().toISOString());
     if (view === "overview") {
       const [counts, usage] = await Promise.all([store.adminCounts(), store.adminUsageTotals()]);
-      return jsonResponse({ counts, usage, redisConfigured: getRedisClient() !== null }, 200, requestId);
+      // Booleans only: what is configured, never any value.
+      const p = configuredProviders();
+      const redis = getRedisClient() ? await pingRedis() : { configured: false, ok: false };
+      const ai = {
+        enabled: getServerConfig().AI_INSPECTIONS_ENABLED && p.providers.length > 0,
+        geminiConfigured: p.geminiConfigured,
+        openaiConfigured: p.openaiConfigured,
+        webSearchEnabled: p.webSearch,
+        strategy: strategyFor(p.providers, p.geminiConfigured),
+      };
+      return jsonResponse({ counts, usage, redisConfigured: redis.configured, redisReachable: redis.ok, ai }, 200, requestId);
     }
     if (view === "users") return jsonResponse(await store.adminListUsers(limit, cursor), 200, requestId);
     if (view === "inspections") return jsonResponse(await store.adminListInspections(limit, cursor), 200, requestId);
