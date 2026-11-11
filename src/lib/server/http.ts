@@ -16,12 +16,32 @@ export function errorResponse(status: number, code: string, message: string, req
   return jsonResponse({ error: { code, message, requestId } }, status, requestId, extra);
 }
 
+/**
+ * Hosts this deployment is legitimately served from. Behind Firebase App Hosting / Cloud Run the request URL
+ * carries an internal host, so the public host arrives in X-Forwarded-Host (set by Google's front end, which a
+ * cross-site browser request cannot forge). APP_BASE_URL, when set, is also accepted.
+ */
+function ownHosts(req: Request): Set<string> {
+  const hosts = new Set<string>();
+  const add = (h: string | null | undefined) => h && hosts.add(h.split(",")[0].trim().toLowerCase());
+  add(req.headers.get("x-forwarded-host"));
+  add(req.headers.get("host"));
+  try {
+    add(new URL(req.url).host);
+  } catch {}
+  try {
+    const base = process.env.APP_BASE_URL;
+    if (base) add(new URL(base).host);
+  } catch {}
+  return hosts;
+}
+
 /** Rejects cross-origin state-changing requests (CSRF defence for cookie-less bearer APIs too). */
 export function isSameOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
   if (!origin) return true; // non-browser clients and same-origin GETs send no Origin
   try {
-    return new URL(origin).host === new URL(req.url).host;
+    return ownHosts(req).has(new URL(origin).host.toLowerCase());
   } catch {
     return false;
   }

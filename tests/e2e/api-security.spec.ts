@@ -58,6 +58,17 @@ test.describe("API security (real server, emulated Auth/Firestore)", () => {
     expect(JSON.stringify(await res.json())).not.toMatch(/stack|at \/|node_modules/i);
   });
 
+  test("behind the App Hosting proxy: a browser write from the public host is accepted, a foreign Origin is not", async ({ request }) => {
+    const a = await createUserWithToken(uniqueEmail("proxy"));
+    const body = { kind: "message", text: MESSAGE };
+    const viaProxy = await request.post("/api/inspections", { headers: { ...authed(a.token), Origin: "https://app.example.test", "X-Forwarded-Host": "app.example.test" }, data: body });
+    expect(viaProxy.status()).toBe(201);
+    const foreign = await request.post("/api/inspections", { headers: { ...authed(a.token), Origin: "https://evil.example", "X-Forwarded-Host": "app.example.test" }, data: body });
+    expect(foreign.status()).toBe(403);
+    const del = await request.delete("/api/user/account", { headers: { ...authed(a.token), Origin: "https://evil.example", "X-Forwarded-Host": "app.example.test" } });
+    expect(del.status()).toBe(403);
+  });
+
   test("anonymous identities cannot run inspections or claim", async ({ request }) => {
     const anonRes = await fetch("http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
     const anon = (await anonRes.json()) as { idToken: string };
