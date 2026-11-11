@@ -23,7 +23,8 @@ export async function gate(
   if (opts.mutating !== false && !isSameOrigin(req)) return { ok: false, response: errorResponse(403, "CROSS_ORIGIN", "Cross-origin requests are not allowed.", requestId) };
 
   const token = bearerToken(req);
-  const user = token ? await verifyToken(token, opts.checkRevoked) : null;
+  // Always check revocation/existence: a deleted or disabled account's still-valid ID token must not work.
+  const user = token ? await verifyToken(token, opts.checkRevoked ?? true) : null;
   if (!user) return { ok: false, response: errorResponse(401, "UNAUTHORIZED", "Sign-in required.", requestId) };
   if (user.isAnonymous && !opts.allowAnonymous) return { ok: false, response: errorResponse(403, "ACCOUNT_REQUIRED", "Create an account or sign in to continue.", requestId) };
 

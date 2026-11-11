@@ -5,7 +5,7 @@ No Vercel configuration exists or is used.
 
 ## Owner actions, in order
 
-1. **Authentication providers** (Firebase console → Authentication → Get started → Sign-in method): enable **Email/Password**, **Google** and **Anonymous**. Anonymous is used only to hold a visitor's pending request before sign-up. Add the App Hosting domain to *Authentication → Settings → Authorized domains* after the first rollout.
+1. **Authorized domain for Google sign-in.** Email/Password and Anonymous sign-in are enabled from `firebase.json` (`firebase deploy --only auth`), as is the Google provider. Google's popup additionally requires the App Hosting domain to be listed: Firebase console → Authentication → Settings → Authorized domains → add `internyra--internyra-385d6.asia-southeast1.hosted.app` (and any custom domain). Until then Google sign-in is rejected with `auth/unauthorized-domain`; email sign-up is unaffected.
 2. **Restrict the web API key** (Google Cloud console → APIs & Services → Credentials): limit it to your App Hosting domain(s). It is a public identifier, but restricting it is good practice.
 3. **Rotate exposed credentials.** The OpenAI key and Upstash REST token that were pasted into earlier chats are compromised. Revoke the OpenAI key and rotate the Upstash token, then create *new* ones. Never paste them into chat or commit them.
 4. **Create secrets** (values are typed at the prompt, never on the command line):
@@ -22,12 +22,12 @@ No Vercel configuration exists or is used.
 
 ## Backend
 
-The App Hosting backend needs a GitHub connection, which the Firebase console / CLI sets up interactively:
+The backend `internyra` exists in `asia-southeast1` and is rolled out from local source:
 
 ```bash
-firebase apphosting:backends:create --project internyra-385d6 --backend internyra --primary-region asia-southeast1 --root-dir /
+firebase deploy --only apphosting --project internyra-385d6   # uploads source (see the ignore list in firebase.json; .env* is excluded) and rolls out
 ```
-Choose repository `Abhishekkswamii/Internyra`, live branch `main`, automatic rollouts on. Every push to `main` then builds and rolls out. Cloud Run limits (`maxInstances: 2`, `minInstances: 0`, `concurrency: 20`) are in `apphosting.yaml`.
+It is **not yet connected to GitHub**: the connection needs a browser OAuth step that the CLI cannot complete. To get automatic rollouts on every push to `main`: Firebase console → App Hosting → `internyra` → Settings → Deployment → Connect to GitHub → repository `Abhishekkswamii/Internyra`, live branch `main`, automatic rollouts on. Cloud Run limits (`maxInstances: 2`, `minInstances: 0`, `concurrency: 20`) are in `apphosting.yaml`.
 
 ## Rules and indexes
 

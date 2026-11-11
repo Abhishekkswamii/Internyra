@@ -60,6 +60,20 @@ describe("authentication on every protected route", () => {
   });
 });
 
+describe("deleted accounts", () => {
+  it("every authenticated route verifies tokens with revocation/existence checking", async () => {
+    const mod = await import("@/lib/firebase/admin");
+    const seen: boolean[] = [];
+    const orig = mod.verifyToken;
+    vi.spyOn(mod, "verifyToken").mockImplementation(async (t: string, c?: boolean) => { seen.push(Boolean(c)); return orig(t, c); });
+    await inspections.POST(jsonReq("/api/inspections", "POST", bearer("u1"), msg));
+    await inspections.GET(jsonReq("/api/inspections", "GET", bearer("u1")));
+    await byId.GET(jsonReq("/x", "GET", bearer("u1")), p("insp_12345678"));
+    expect(seen.length).toBeGreaterThanOrEqual(3);
+    expect(seen.every(Boolean)).toBe(true);
+  });
+});
+
 describe("visitor submission", () => {
   it("creates a pending_auth inspection for an anonymous identity and runs no analysis", async () => {
     process.env.AI_INSPECTIONS_ENABLED = "true";
