@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// Deny by default. All writes go through server routes using the Admin SDK (which bypasses these
+// rules after verifying the caller's Firebase ID token). Clients may only READ their own data.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+
+      match /inspections/{inspectionId} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow write: if false;
+      }
+    }
+
+    // Server-managed queue/status metadata, usage events and admin audit logs:
+    // no client access at all. Administrators read them through verified server routes.
+    match /inspectionJobs/{jobId} {
+      allow read, write: if false;
+    }
+    match /usageEvents/{eventId} {
+      allow read, write: if false;
+    }
+    match /adminAuditLogs/{eventId} {
+      allow read, write: if false;
+    }
+  }
+}

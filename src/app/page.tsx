@@ -1,69 +1,108 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Navbar } from "@/components/web/Navbar";
+import { Hero } from "@/components/web/Hero";
+import { LockedScanPreview } from "@/components/web/LockedScanPreview";
+import { Examines } from "@/components/web/Examines";
+import { VerificationWorkflow } from "@/components/web/VerificationWorkflow";
+import { ThreeSteps } from "@/components/web/ThreeSteps";
+import { FinalCta } from "@/components/web/FinalCta";
+import { FaqSection } from "@/components/web/FaqSection";
+import { Footer } from "@/components/web/Footer";
+import { clearDraft, loadDraft } from "@/lib/persistence/browser";
+import { useHydrated } from "@/lib/use-hydrated";
+import { useAuth } from "@/lib/firebase/auth-context";
+import { useApi, type Inspection } from "@/lib/inspections-client";
+import type { VerificationRequest } from "@/types/verification";
+
+function scrollToPreview() {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(() => document.getElementById("guest-preview")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" }), 50);
+}
+
+export default function HomePage() {
+  const router = useRouter();
+  const hydrated = useHydrated();
+  const draft = hydrated ? loadDraft() : null;
+  const { user, loading, isAnonymous, configured, ensureAnonymous } = useAuth();
+  const api = useApi();
+
+  const [pending, setPending] = useState<Inspection | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // A visitor who refreshes keeps their saved request: it lives on the server under their anonymous identity.
+  useEffect(() => {
+    if (loading || !user || !isAnonymous) return;
+    let alive = true;
+    api<{ inspections: Inspection[] }>("/api/inspections?limit=5").then((r) => {
+      if (!alive || !r.ok) return;
+      const latest = r.data.inspections.find((i) => i.status === "pending_auth");
+      if (latest) setPending(latest);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [loading, user, isAnonymous, api]);
+
+  const handleSubmit = async (request: VerificationRequest) => {
+    setNotice(null);
+    if (!configured) {
+      setNotice("Sign-in is not available on this deployment yet, so inspections cannot be saved.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const identity = user ?? (await ensureAnonymous());
+      if (!identity) {
+        setNotice("Could not start a secure session. Please check your connection and try again.");
+        return;
+      }
+      const { origin: _origin, ...body } = request;
+      void _origin;
+      const r = await api<{ inspection: Inspection }>("/api/inspections", { method: "POST", body });
+      if (!r.ok) {
+        setNotice(r.message);
+        return;
+      }
+      clearDraft(); // the pasted text now lives only in the saved inspection
+      const rec = r.data.inspection;
+      if (rec.status === "pending_auth") {
+        setPending(rec);
+        scrollToPreview();
+      } else {
+        router.push(`/app/reports/${encodeURIComponent(rec.id)}?start=1`);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (pending) await api(`/api/inspections/${encodeURIComponent(pending.id)}`, { method: "DELETE" });
+    setPending(null);
+    window.scrollTo({ top: 0, behavior: "auto" });
+    document.getElementById("guest-input")?.focus({ preventScroll: true });
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <div className="flex min-h-screen flex-col bg-[var(--canvas)] text-[var(--ink-secondary)]">
+      <Navbar />
+      <main className="flex-1">
+        <Hero key={hydrated ? "client" : "server"} initialDraft={draft} onSubmit={handleSubmit} isRunning={submitting} />
+        {notice && (
+          <p role="alert" className="mx-auto max-w-3xl px-4 py-3 text-center text-sm text-[var(--status-risk-text)]">{notice}</p>
+        )}
+        {pending && <LockedScanPreview inspection={pending} onReset={handleReset} />}
+        <Examines />
+        <VerificationWorkflow />
+        <ThreeSteps />
+        <FinalCta />
+        <FaqSection />
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,65 @@
+# Firebase App Hosting configuration (Cloud Run under the hood).
+# Only NON-secret values live here. Secrets are referenced from Google Secret Manager by name
+# (see docs/DEPLOYMENT.md); they are never written to this file.
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  # Scale to zero when idle; a hard ceiling keeps a traffic spike (or abuse) from creating surprise cost.
+  minInstances: 0
+  maxInstances: 2
+  # Each inspection request can run for up to a couple of minutes, so keep concurrency modest.
+  concurrency: 20
+
+env:
+  # Public Firebase web config. These identify the project and are not secrets.
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyDtCV6x4_F1i8kL6iY96ilaQQ02yKiiUtg
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: internyra-385d6.firebaseapp.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: internyra-385d6
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:968192962900:web:57ca142c90fbbdb00a58c1
+    availability: [BUILD, RUNTIME]
+  - variable: FIREBASE_PROJECT_ID
+    value: internyra-385d6
+    availability: [RUNTIME]
+
+  # Models are configurable. The defaults match the owner's choices; override here if they change.
+  - variable: GEMINI_MODEL
+    value: gemini-3.8-flash
+    availability: [RUNTIME]
+  - variable: OPENAI_MODEL
+    value: gpt-6-luna
+    availability: [RUNTIME]
+  - variable: AI_PROVIDER_ORDER
+    value: gemini,openai
+    availability: [RUNTIME]
+  - variable: AI_WEB_SEARCH_ENABLED
+    value: "false"
+    availability: [RUNTIME]
+
+  # Kill switch. Stays "false" until a provider key is installed AND smoke-tested (npm run smoke:ai).
+  - variable: AI_INSPECTIONS_ENABLED
+    value: "false"
+    availability: [RUNTIME]
+
+  # Secrets (create each with: firebase apphosting:secrets:set <name>), then uncomment the matching block:
+  # - variable: OPENAI_API_KEY
+  #   secret: openai-api-key
+  #   availability: [RUNTIME]
+  # - variable: GEMINI_API_KEY
+  #   secret: gemini-api-key
+  #   availability: [RUNTIME]
+  # - variable: UPSTASH_REDIS_REST_URL
+  #   secret: upstash-redis-rest-url
+  #   availability: [RUNTIME]
+  # - variable: UPSTASH_REDIS_REST_TOKEN
+  #   secret: upstash-redis-rest-token
+  #   availability: [RUNTIME]
+  # - variable: ADMIN_UID
+  #   secret: admin-uid
+  #   availability: [RUNTIME]
