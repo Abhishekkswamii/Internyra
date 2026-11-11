@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useMemo, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Check, Eye, EyeOff, KeyRound, Mail, MailCheck, RotateCw, User as UserIcon } from "lucide-react";
@@ -52,9 +52,13 @@ export function AuthExperience({ initialMode }: { initialMode?: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Already signed in with a real account: go straight to the destination.
+  // True while this form's own sign-in is still handing pending work to the account. The redirect below must not
+  // fire in that window, or the dashboard would load before the claim finishes and show a stale status.
+  const inFlow = useRef(false);
+
+  // Already signed in with a real account (opened /login while signed in): go straight to the destination.
   useEffect(() => {
-    if (!loading && user && !isAnonymous) router.replace(next);
+    if (!loading && user && !isAnonymous && !inFlow.current) router.replace(next);
   }, [loading, user, isAnonymous, next, router]);
 
   const q = next === "/app" ? "" : `next=${encodeURIComponent(next)}`;
@@ -79,6 +83,7 @@ export function AuthExperience({ initialMode }: { initialMode?: Mode }) {
 
   const finish = async (res: AuthResult) => {
     if (res.error || !res.user) {
+      inFlow.current = false;
       setError(res.error ?? "Something went wrong. Please try again.");
       setBusy(false);
       return;
@@ -96,12 +101,14 @@ export function AuthExperience({ initialMode }: { initialMode?: Mode }) {
       if (password !== confirm) return setError("The two passwords don't match.");
     } else if (!password) return setError("Enter your password.");
     setBusy(true);
+    inFlow.current = true;
     await finish(mode === "signup" ? await signUp(email.trim(), password, name) : await signIn(email.trim(), password));
   };
 
   const google = async () => {
     setError(null);
     setBusy(true);
+    inFlow.current = true;
     await finish(await signInGoogle());
   };
 

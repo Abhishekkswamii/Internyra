@@ -270,6 +270,9 @@ test.describe("pending inspection handoff through the new pages", () => {
     await signUpViaUI(page, { email, path: page.url() });
     await page.waitForURL("**/app", { timeout: 30_000 });
     await expect(page.getByTestId("inspection-row")).toHaveCount(1, { timeout: 20_000 });
+    // The dashboard must already reflect the claim: no stale "Waiting for sign-in" chip.
+    await expect(page.getByTestId("inspection-row")).toContainText("Queued");
+    await expect(page.getByTestId("inspection-row")).not.toContainText("Waiting for sign-in");
     const after = (await findInspections()).find((r) => r.id === before.id)!;
     expect(after.ownerUid).toBe(before.ownerUid);
     expect(after.status).toBe("queued");
@@ -284,6 +287,7 @@ test.describe("pending inspection handoff through the new pages", () => {
     await logInViaUI(page, { email: existing.email, path: "/login" });
     await page.waitForURL("**/app", { timeout: 30_000 });
     await expect(page.getByTestId("inspection-row")).toHaveCount(1, { timeout: 20_000 });
+    await expect(page.getByTestId("inspection-row")).toContainText("Queued");
     const after = (await findInspections()).find((r) => r.id === before.id)!;
     expect(after.ownerUid).toBe(existing.uid);
     expect(after.status).toBe("queued");
