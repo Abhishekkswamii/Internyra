@@ -28,12 +28,24 @@ async function main() {
   }
 
   const auth = getAuth(initializeApp({ projectId }));
-  const user = await (arg ? auth.getUser(arg) : auth.getUserByEmail(email!)).catch(() => null);
+  let user = null;
+  try {
+    user = await (arg ? auth.getUser(arg) : auth.getUserByEmail(email!));
+  } catch (e) {
+    const code = (e as { code?: string }).code ?? "";
+    // Only a genuine not-found means "no such account"; credential and permission errors must not be disguised as one.
+    if (code !== "auth/user-not-found") {
+      console.error(`Could not query Firebase Auth (${code || "unexpected error"}).`);
+      if (code === "app/invalid-credential") console.error("Your local Google credentials are expired or need re-authentication. Run: gcloud auth application-default login");
+      if (code.includes("insufficient") || code.includes("permission")) console.error("The signed-in Google account lacks access to this Firebase project.");
+      process.exit(1);
+    }
+  }
   if (!user) {
     console.error("No Firebase Auth user was found. Create the account through the app's sign-up page first; this script never creates one.");
     process.exit(1);
   }
-  if (user.providerData.length === 0) {
+  if (!user.email || user.providerData.length === 0 && !user.passwordHash) {
     console.error("Refusing: that account is an anonymous visitor, not a real account.");
     process.exit(1);
   }
