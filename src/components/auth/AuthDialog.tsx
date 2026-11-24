@@ -260,7 +260,7 @@ export function AuthDialog({
       ref={dialogRef}
       id={pendingInspection ? "guest-preview" : undefined}
       data-testid={pendingInspection ? "locked-shell" : undefined}
-      className="relative w-full max-w-[440px] rounded-2xl border border-[var(--border-light)] bg-white p-6 sm:p-8 shadow-2xl space-y-5 max-h-[92dvh] overflow-y-auto"
+      className="relative z-10 w-full max-w-[440px] my-auto rounded-2xl border border-[var(--border-light)] bg-white p-5 sm:p-7 shadow-2xl space-y-4 max-h-[calc(100dvh-3rem)] overflow-y-auto"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Top Header Row with Logo and Close */}
@@ -282,7 +282,7 @@ export function AuthDialog({
       {/* Pending Inspection Banner & Locked Preview */}
       {pendingInspection && (
         <div
-          className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--surface-accent)]/60 p-4 space-y-3"
+          className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--surface-accent)]/60 p-3.5 space-y-2.5"
         >
           <div className="flex items-start gap-2.5">
             <div className="grid place-items-center w-7 h-7 rounded-lg bg-[var(--brand-primary)] text-white shrink-0 mt-0.5">
@@ -734,7 +734,7 @@ export function AuthDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-title"
-      className="fixed inset-0 z-50 grid place-items-center p-4 bg-[var(--ink-primary)]/60 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/60 backdrop-blur-sm animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget && !busy) onClose?.();
       }}

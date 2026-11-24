@@ -85,7 +85,7 @@ export function Navbar({ onOpenLogin, onOpenSignup }: NavbarProps = {}) {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-[60] w-full bg-[var(--canvas)]/85 backdrop-blur-md">
+    <header className="sticky top-0 z-30 w-full bg-[var(--canvas)]/85 backdrop-blur-md">
       <div className="mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-10">
         <Logo variant="full" size="md" />
 

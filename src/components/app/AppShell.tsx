@@ -263,7 +263,7 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-3">
-            {pathname !== "/app/verify" && (
+            {pathname !== "/app" && pathname !== "/app/verify" && (
               <Link
                 href="/app/verify"
                 aria-label="New inspection"
