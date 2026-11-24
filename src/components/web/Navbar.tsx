@@ -50,7 +50,12 @@ function AccountMenu({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Navbar() {
+interface NavbarProps {
+  onOpenLogin?: () => void;
+  onOpenSignup?: () => void;
+}
+
+export function Navbar({ onOpenLogin, onOpenSignup }: NavbarProps = {}) {
   const { user, loading, isAnonymous, isAdmin, logout } = useAuth();
   const router = useRouter();
   // A visitor holding only an anonymous identity (a pending request) is still signed out.
@@ -80,7 +85,7 @@ export function Navbar() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[var(--canvas)]/85 backdrop-blur-md">
+    <header className="sticky top-0 z-[60] w-full bg-[var(--canvas)]/85 backdrop-blur-md">
       <div className="mx-auto flex h-[68px] max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-10">
         <Logo variant="full" size="md" />
 
@@ -111,8 +116,32 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="rounded-full px-4 py-2 text-sm font-medium text-[var(--ink-secondary)] transition-colors hover:text-[var(--ink-primary)]">Log in</Link>
-              <Link href="/signup" className="inline-flex items-center rounded-full bg-[var(--ink-primary)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-primary)] active:scale-[0.985]">Sign up</Link>
+              <Link
+                href="/login"
+                onClick={(e) => {
+                  if (onOpenLogin) {
+                    e.preventDefault();
+                    if (typeof window !== "undefined") window.history.pushState(null, "", "/login");
+                    onOpenLogin();
+                  }
+                }}
+                className="rounded-full px-4 py-2 text-sm font-medium text-[var(--ink-secondary)] transition-colors hover:text-[var(--ink-primary)]"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                onClick={(e) => {
+                  if (onOpenSignup) {
+                    e.preventDefault();
+                    if (typeof window !== "undefined") window.history.pushState(null, "", "/signup");
+                    onOpenSignup();
+                  }
+                }}
+                className="inline-flex items-center rounded-full bg-[var(--ink-primary)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-primary)] active:scale-[0.985]"
+              >
+                Sign up
+              </Link>
             </>
           )}
         </div>
@@ -148,8 +177,34 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/signup" onClick={() => setOpen(false)} className="btn-primary h-12 w-full text-base">Sign up</Link>
-                <Link href="/login" onClick={() => setOpen(false)} className="flex h-12 items-center justify-center rounded-full border border-[var(--ink-primary)]/15 text-base font-medium">Log in</Link>
+                <Link
+                  href="/signup"
+                  onClick={(e) => {
+                    setOpen(false);
+                    if (onOpenSignup) {
+                      e.preventDefault();
+                      if (typeof window !== "undefined") window.history.pushState(null, "", "/signup");
+                      onOpenSignup();
+                    }
+                  }}
+                  className="btn-primary h-12 w-full text-base"
+                >
+                  Sign up
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={(e) => {
+                    setOpen(false);
+                    if (onOpenLogin) {
+                      e.preventDefault();
+                      if (typeof window !== "undefined") window.history.pushState(null, "", "/login");
+                      onOpenLogin();
+                    }
+                  }}
+                  className="flex h-12 items-center justify-center rounded-full border border-[var(--ink-primary)]/15 text-base font-medium"
+                >
+                  Log in
+                </Link>
               </>
             )}
           </div>

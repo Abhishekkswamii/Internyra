@@ -70,7 +70,7 @@ function FindingCard({ finding, onEvidence }: { finding: Finding; onEvidence: (i
   const sev = SEVERITY_META[finding.severity];
   const Icon = sev.icon;
   return (
-    <div className="rounded-xl border border-[var(--border-light)] bg-[var(--surface-0)] p-4 sm:p-5 space-y-3 shadow-xs" data-testid="finding-card">
+    <div className="rounded-2xl border border-[var(--border-light)] bg-[var(--surface-0)] p-4 sm:p-5 space-y-3 shadow-xs hover:border-[var(--brand-primary)]/30 transition-all" data-testid="finding-card">
       <div className="flex items-start gap-2.5">
         <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${sev.iconColor}`} />
         <div className="min-w-0">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/web/Navbar";
 import { Hero } from "@/components/web/Hero";
-import { LockedScanPreview } from "@/components/web/LockedScanPreview";
+import { AuthDialog, type AuthMode } from "@/components/auth/AuthDialog";
 import { Examines } from "@/components/web/Examines";
 import { VerificationWorkflow } from "@/components/web/VerificationWorkflow";
 import { ThreeSteps } from "@/components/web/ThreeSteps";
@@ -17,11 +17,6 @@ import { useAuth } from "@/lib/firebase/auth-context";
 import { useApi, type Inspection } from "@/lib/inspections-client";
 import type { VerificationRequest } from "@/types/verification";
 
-function scrollToPreview() {
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  setTimeout(() => document.getElementById("guest-preview")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" }), 50);
-}
-
 export default function HomePage() {
   const router = useRouter();
   const hydrated = useHydrated();
@@ -33,14 +28,21 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // A visitor who refreshes keeps their saved request: it lives on the server under their anonymous identity.
+  // Authentication dialog state
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("signup");
+
+  // A visitor who refreshes keeps their saved request under their anonymous identity.
   useEffect(() => {
     if (loading || !user || !isAnonymous) return;
     let alive = true;
     api<{ inspections: Inspection[] }>("/api/inspections?limit=5").then((r) => {
       if (!alive || !r.ok) return;
       const latest = r.data.inspections.find((i) => i.status === "pending_auth");
-      if (latest) setPending(latest);
+      if (latest) {
+        setPending(latest);
+        setAuthOpen(true);
+      }
     });
     return () => {
       alive = false;
@@ -71,7 +73,9 @@ export default function HomePage() {
       const rec = r.data.inspection;
       if (rec.status === "pending_auth") {
         setPending(rec);
-        scrollToPreview();
+        setAuthMode("signup");
+        setAuthOpen(true);
+        // Scroll position is preserved: NO scroll down to an inline card!
       } else {
         router.push(`/app/reports/${encodeURIComponent(rec.id)}?start=1`);
       }
@@ -80,22 +84,34 @@ export default function HomePage() {
     }
   };
 
-  const handleReset = async () => {
-    if (pending) await api(`/api/inspections/${encodeURIComponent(pending.id)}`, { method: "DELETE" });
-    setPending(null);
-    window.scrollTo({ top: 0, behavior: "auto" });
-    document.getElementById("guest-input")?.focus({ preventScroll: true });
-  };
-
   return (
     <div className="flex min-h-screen flex-col bg-[var(--canvas)] text-[var(--ink-secondary)]">
-      <Navbar />
+      <Navbar
+        onOpenLogin={() => {
+          setAuthMode("login");
+          setAuthOpen(true);
+        }}
+        onOpenSignup={() => {
+          setAuthMode("signup");
+          setAuthOpen(true);
+        }}
+      />
       <main className="flex-1">
-        <Hero key={hydrated ? "client" : "server"} initialDraft={draft} onSubmit={handleSubmit} isRunning={submitting} />
+        <Hero
+          key={hydrated ? "client" : "server"}
+          initialDraft={draft}
+          onSubmit={handleSubmit}
+          isRunning={submitting}
+        />
         {notice && (
-          <p role="alert" className="mx-auto max-w-3xl px-4 py-3 text-center text-sm text-[var(--status-risk-text)]">{notice}</p>
+          <p
+            role="alert"
+            className="mx-auto max-w-3xl px-4 py-3 text-center text-sm text-[var(--status-risk-text)]"
+          >
+            {notice}
+          </p>
         )}
-        {pending && <LockedScanPreview inspection={pending} onReset={handleReset} />}
+
         <Examines />
         <VerificationWorkflow />
         <ThreeSteps />
@@ -103,6 +119,19 @@ export default function HomePage() {
         <FaqSection />
       </main>
       <Footer />
+
+      {/* Centered Authentication Modal Dialog */}
+      <AuthDialog
+        open={authOpen}
+        initialMode={authMode}
+        onClose={() => {
+          setAuthOpen(false);
+          if (typeof window !== "undefined" && (window.location.pathname === "/login" || window.location.pathname === "/signup")) {
+            window.history.pushState(null, "", "/");
+          }
+        }}
+        pendingInspection={pending}
+      />
     </div>
   );
 }
